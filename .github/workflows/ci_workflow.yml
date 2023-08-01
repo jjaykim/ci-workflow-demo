@@ -34,7 +34,9 @@ jobs:
       - name: Check for New Commits
         id: check_commits
         run: |
-          CHANGED_FILES=$(git diff --name-only origin/develop...${{ github.sha }})
+          # Find the merge base between the remote develop branch and the current commit
+          MERGE_BASE=$(git merge-base origin/develop ${{ github.sha }})
+          CHANGED_FILES=$(git diff --name-only $MERGE_BASE ${{ github.sha }})
           if [ -n "$CHANGED_FILES" ]; then
             # 새로운 커밋이 있을 때만 승인 상태 확인
             APPROVALS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
