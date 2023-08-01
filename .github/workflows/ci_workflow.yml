@@ -24,28 +24,29 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # 이전 승인 상태 초기화
       - name: Reset Approvals
         run: |
-          curl -s -X PUT \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
+          APPROVAL_IDS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
-            | jq '.[] | select(.state == "APPROVED") | .id' \
-            | xargs -I {} curl -s -X DISMISS \
+            | jq -r '.[] | select(.state == "APPROVED") | .id')
+
+          for APPROVAL_ID in $APPROVAL_IDS; do
+            curl -s -X PUT \
               -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
               -H "Accept: application/vnd.github.v3+json" \
-              "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews/{}"
+              "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews/$APPROVAL_ID/dismiss"
+          done
 
       # 새로운 커밋에 대해 승인 상태 확인
       - name: Check for Approval
         id: check_approval
         run: |
           APPROVALS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
-              | jq '.[] | select(.state == "APPROVED")')
+            "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
+            | jq '.[] | select(.state == "APPROVED")')
           if [ -z "$APPROVALS" ]; then
             echo "Approvals are required before merging to develop branch."
             exit 1
