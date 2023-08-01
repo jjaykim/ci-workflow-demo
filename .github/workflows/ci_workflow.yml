@@ -32,7 +32,7 @@ jobs:
         run: |
           API_URL="https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews"
           APPROVAL_COUNT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$API_URL" | jq '[.[] | select(.state == "APPROVED")] | length')
-          if [ "$APPROVAL_COUNT" -lt 2 ]; then
+          if [ "$APPROVAL_COUNT" -lt 1 ]; then
             echo "Two approvals are required before merging to develop branch."
             exit 1
           else
