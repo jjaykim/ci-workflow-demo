@@ -30,6 +30,7 @@ jobs:
       - name: Check for Approval
         id: check_approval
         run: |
+          echo ${{secrets.GITHUB_TOKEN}}
           API_URL="https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews"
           APPROVALS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$API_URL" | jq '.[] | select(.state == "APPROVED")')
           if [ -z "$APPROVALS" ]; then
