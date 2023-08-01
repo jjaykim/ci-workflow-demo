@@ -26,20 +26,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # 이전 승인 상태 초기화
-      - name: Reset Approvals
+      # 이전 승인 해제
+      - name: Dismiss Previous Approvals
         run: |
           API_URL="https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews"
-          APPROVAL_IDS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "$API_URL" \
-            | jq -r '.[] | select(.state == "APPROVED") | .id')
+          APPROVALS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$API_URL" | jq '.[] | select(.state == "APPROVED")')
 
-          for APPROVAL_ID in $APPROVAL_IDS; do
+          for APPROVAL in $APPROVALS; do
+            REVIEW_ID=$(echo $APPROVAL | jq -r '.id')
             curl -s -X PUT \
               -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
               -H "Accept: application/vnd.github.v3+json" \
-              "$API_URL/$APPROVAL_ID/dismiss"
+              "$API_URL/$REVIEW_ID/dismiss"
           done
 
       # 새로운 커밋에 대해 승인 상태 확인
