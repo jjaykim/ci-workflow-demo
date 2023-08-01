@@ -24,47 +24,34 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
 
-      # 원격 저장소에서 develop 브랜치의 최신 커밋 가져오기
-      - name: Fetch develop branch
-        run: git fetch origin develop:refs/remotes/origin/develop
-
-      # 새로운 커밋에 대해 승인 상태 확인
-      - name: Check for New Commits
-        id: check_commits
+      # 이전 승인 상태 초기화
+      - name: Reset Approvals
         run: |
-          # Find the merge base between the remote develop branch and the current commit
-          MERGE_BASE=$(git merge-base origin/develop ${{ github.sha }})
-          CHANGED_FILES=$(git diff --name-only $MERGE_BASE ${{ github.sha }})
-          if [ -n "$CHANGED_FILES" ]; then
-            # 새로운 커밋이 있을 때만 승인 상태 확인
-            APPROVALS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
-                | jq '.[] | select(.state == "APPROVED")')
-            if [ -z "$APPROVALS" ]; then
-              echo "Approvals are required before merging to develop branch."
-              exit 1
-            else
-              echo "Approvals are received. Ready for merge."
-            fi
-          else
-            echo "No new commits. No need to validate approvals."
-          fi
+          curl -s -X PUT \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
+            | jq '.[] | select(.state == "APPROVED") | .id' \
+            | xargs -I {} curl -s -X DISMISS \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews/{}"
 
       # 새로운 커밋에 대해 승인 상태 확인
-      # - name: Check for Approval
-      #   id: check_approval
-      #   run: |
-      #     APPROVALS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-      #         "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
-      #         | jq '.[] | select(.state == "APPROVED")')
-      #     if [ -z "$APPROVALS" ]; then
-      #       echo "Approvals are required before merging to develop branch."
-      #       exit 1
-      #     else
-      #       echo "Approvals are received. Ready for merge."
-      #     fi
+      - name: Check for Approval
+        id: check_approval
+        run: |
+          APPROVALS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              "${{ github.api_url }}/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
+              | jq '.[] | select(.state == "APPROVED")')
+          if [ -z "$APPROVALS" ]; then
+            echo "Approvals are required before merging to develop branch."
+            exit 1
+          else
+            echo "Approvals are received. Ready for merge."
+          fi
 
   merge-to-develop:
     name: Merge to Develop
