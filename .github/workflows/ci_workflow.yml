@@ -26,6 +26,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: jq 설치
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       # 이전 승인 해제
       - name: Dismiss Previous Approvals
         if: github.event.pull_request.merged == false
