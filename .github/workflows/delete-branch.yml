@@ -27,7 +27,8 @@ jobs:
 
             for branch in $BRANCHES; do
               echo "Deleting branch: $branch"
-              git push origin --delete $branch
+              curl -X DELETE -H "Authorization: Bearer ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}" \
+                "https://api.github.com/repos/${{ github.repository }}/git/refs/heads/$branch"
             done
           else
             echo "No branches to delete."
