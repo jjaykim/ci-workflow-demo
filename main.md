@@ -1,0 +1,1 @@
+- [] feature/merge-to-devlop => Approval 받은 뒤 자동으로 develop 브랜치로 merge 되는것 테스트
