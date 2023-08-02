@@ -21,12 +21,15 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/branches" \
             | jq -r '.[] | .name')
 
-          echo "Branches: $BRANCHES"
+          echo "BRANCHES=$BRANCHES" >> $GITHUB_OUTPUT
         shell: bash
 
-      # - name: Delete Branches
-      #   run: |
-      #     for branch in ${{ steps.get_branches.outputs.branches }}; do
-      #       echo "Deleting branch: $branch"
-      #       git push origin --delete $branch
-      #     done
+      - name: Delete Branches
+        run: |
+          BRANCHES_TO_DELETE=$(${{steps.get_branches.outputs.BRANCHES}} | grep -E "^(feature/|refactor/|issue/)")
+          echo "The list of Branches will be deleted: $BRANCHES_TO_DELETE"
+
+          for branch in ${ BRANCHES_TO_DELETE }; do
+            echo "Deleting branch: $branch"
+            git push origin --delete $branch
+          done
