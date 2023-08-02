@@ -28,6 +28,7 @@ jobs:
         run: |
           REVIEW_IDS=$(curl -L -s ${{env.API_HEADERS}} "${{env.API_URL}}" | jq '.[] | select(.state == "APPROVED") | .id')
           for id in $REVIEW_IDS; do
+            echo "Found previous approvals"
             curl -L -X PUT ${{env.API_HEADERS}} "${{env.API_URL}}/${id}/dismissals" -d '{"message":"You are dismissed","event":"DISMISS"}'
           done
 
@@ -44,8 +45,7 @@ jobs:
       - name: Check for Approval
         id: check_approval
         run: |
-          API_URL="https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews"
-          APPROVAL_COUNT=$(curl -L -s -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" -H "Accept: application/vnd.github+json" "$API_URL" | jq '[.[] | select(.state == "APPROVED")] | length')
+          APPROVAL_COUNT=$(curl -L -s ${{env.API_HEADERS}} "${{env.API_URL}}" | jq '[.[] | select(.state == "APPROVED")] | length')
           if [ "$APPROVAL_COUNT" -lt 1 ]; then
             echo "Two approvals are required before merging to develop branch."
             exit 1
