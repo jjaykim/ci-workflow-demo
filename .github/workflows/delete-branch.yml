@@ -23,7 +23,8 @@ jobs:
 
           echo $BRANCHES
 
-          echo "BRANCHES=$BRANCHES" >> $GITHUB_OUTPUT
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo -e "BRANCHES<<EOF\n$BRANCHES\nEOF" => $GITHUB_OUTPUT
         shell: bash
 
       - name: Delete Branches
