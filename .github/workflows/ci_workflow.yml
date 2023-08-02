@@ -10,18 +10,10 @@ on:
 
 env:
   ACCESS_TOKEN: ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}
+  API_URL: 'https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews'
+  API_HEADERS: "-H 'Authorization: Bearer ${{ secrets.MY_PERSONAL_ACCESS_TOKEN}}' -H 'Accept: application/vnd.github+json'"
 
 jobs:
-  build:
-    name: Build and Test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      # 여기서부터는 빌드 및 테스트 등 필요한 단계를 추가합니다.
-      # 예를 들어, 프로젝트를 빌드하고 테스트를 실행하는 등의 작업을 수행합니다.
-
   dismiss-approvals:
     name: Dismiss Approvals
     runs-on: ubuntu-latest
@@ -31,19 +23,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # 이미 승인된 Approval을 해제합니다.
-      - name: Dismiss Approval
+      # Source get from https://docs.github.com/ko/rest/pulls/reviews?apiVersion=2022-11-28#dismiss-a-review-for-a-pull-request
+      - name: Dismiss Approvals
         run: |
-          API_URL="https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews"
-          REVIEW_IDS=$(curl -L -s -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" -H "Accept: application/vnd.github+json" "$API_URL" | jq '.[] | select(.state == "APPROVED") | .id')
+          REVIEW_IDS=$(curl -L -s ${{env.API_HEADERS}} "${{env.API_URL}}" | jq '.[] | select(.state == "APPROVED") | .id')
           for id in $REVIEW_IDS; do
-            curl -L -X PUT -H "Authorization: Bearer ${{ env.ACCESS_TOKEN }}" -H "Accept: application/vnd.github+json" "$API_URL/${id}/dismissals" -d '{"message":"You are dismissed","event":"DISMISS"}'
+            curl -L -X PUT ${{env.API_HEADERS}} "${{env.API_URL}}/${id}/dismissals" -d '{"message":"You are dismissed","event":"DISMISS"}'
           done
 
   validate-approvals:
     name: Validate Approvals
     runs-on: ubuntu-latest
-    needs: dismiss-approvals # dismiss-approvals 작업이 성공적으로 끝난 뒤에 실행
+    needs: dismiss-approvals
 
     steps:
       - name: Checkout repository
