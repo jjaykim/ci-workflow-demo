@@ -25,7 +25,7 @@ jobs:
           if [ -n "$BRANCHES" ]; then
             echo "The list of Branches will be deleted: $BRANCHES"
 
-            for branch in $BRANCHES_TO_DELETE; do
+            for branch in $BRANCHES; do
               echo "Deleting branch: $branch"
               git push origin --delete $branch
             done
