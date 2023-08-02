@@ -31,16 +31,17 @@ jobs:
             | jq -r '.[] | .name' | grep -E "^(feature/|refactor/|issue/)")
 
 
-          if [ -n "$BRANCHES" ]; then
-            echo "The list of Branches will be deleted: $BRANCHES"
-
-            for branch in $BRANCHES; do
-              echo "Deleting branch: $branch"
-
-              curl -X DELETE ${{env.API_HEADERS}} \
-                "https://api.github.com/repos/${{ github.repository }}/git/refs/heads/$branch"
-            done
-          else
+          if [ -z "$BRANCHES" ]; then
             echo "No branches to delete."
+            exit 0
           fi
+
+          echo "The list of Branches will be deleted: $BRANCHES"
+
+          for branch in $BRANCHES; do
+            echo "Deleting branch: $branch"
+
+            curl -X DELETE ${{env.API_HEADERS}} \
+              "https://api.github.com/repos/${{ github.repository }}/git/refs/heads/$branch"
+          done
         shell: bash
