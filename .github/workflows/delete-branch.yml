@@ -1,4 +1,5 @@
-name: Delete Branch
+name: Delete Stale Branches
+
 on:
   push:
     branches:
@@ -8,7 +9,7 @@ env:
   API_HEADERS: "-H 'Authorization: Bearer ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}'"
 
 jobs:
-  delete-branches:
+  delete-stale-branches:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
 
