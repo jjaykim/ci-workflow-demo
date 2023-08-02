@@ -16,11 +16,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+        # Source get from https://docs.github.com/en/free-pro-team@latest/rest/branches/branches?apiVersion=2022-11-28#list-branches
+        # Get the list of remote branches that match the specified patterns
+
+        # Source get from https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference
+        # Delete the remote branch
       - name: Get Remote Branches to Delete
         id: get_branches
         run: |
-          # Get the list of remote branches that match the specified patterns
-          # Source get from https://docs.github.com/en/free-pro-team@latest/rest/branches/branches?apiVersion=2022-11-28#list-branches
           BRANCHES=$(curl -s ${{env.API_HEADERS}} \
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/${{ github.repository }}/branches" \
@@ -33,8 +36,6 @@ jobs:
             for branch in $BRANCHES; do
               echo "Deleting branch: $branch"
 
-              # Use the GitHub API to delete the remote branch
-              # Source get from https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference
               curl -X DELETE ${{env.API_HEADERS}} \
                 "https://api.github.com/repos/${{ github.repository }}/git/refs/heads/$branch"
             done
