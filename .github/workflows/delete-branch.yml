@@ -7,15 +7,22 @@ on:
 jobs:
   delete-branches:
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Get Remote Branches to Delete
+        id: get_branches
+        run: |
+          BRANCHES_TO_DELETE=$(git ls-remote --heads origin | grep -E "^(refs/heads/feature/|refs/heads/refactor/|refs/heads/issue/)" | sed -E 's/.*\///')
+          echo "Branches to delete: $BRANCHES_TO_DELETE"
+          echo "::set-output name=branches::$BRANCHES_TO_DELETE"
+
       - name: Delete Branches
         run: |
-          # 원하는 브랜치 패턴에 따라 브랜치 삭제 작업 수행
-          BRANCHES_TO_DELETE=$(git branch -a | grep -E "^(feature/|refactor/|issue/)")
-          for branch in $BRANCHES_TO_DELETE; do
+          for branch in ${{ steps.get_branches.outputs.branches }}; do
             echo "Deleting branch: $branch"
-            git branch -d "$branch"
+            git push origin --delete $branch
           done
