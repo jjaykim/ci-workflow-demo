@@ -18,6 +18,6 @@ jobs:
           for branch in $BRANCHES_TO_DELETE; do
             echo "Deleting branch: $branch"
             curl -X DELETE \
-              -H "Authorization: token ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}" \
+              -H "Authorization: Bearer ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}" \
               "https://api.github.com/repos/${{ github.repository }}/git/refs/heads/$branch"
           done
