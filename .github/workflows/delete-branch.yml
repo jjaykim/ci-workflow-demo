@@ -4,6 +4,9 @@ on:
     branches:
       - develop
 
+env:
+  API_HEADERS: "-H 'Authorization: Bearer ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}'"
+
 jobs:
   delete-branches:
     runs-on: ubuntu-latest
@@ -16,7 +19,9 @@ jobs:
       - name: Get Remote Branches to Delete
         id: get_branches
         run: |
-          BRANCHES=$(curl -s -H "Authorization: Bearer ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}" \
+          # Get the list of remote branches that match the specified patterns
+          # Source get from https://docs.github.com/en/free-pro-team@latest/rest/branches/branches?apiVersion=2022-11-28#list-branches
+          BRANCHES=$(curl -s ${{env.API_HEADERS}} \
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/${{ github.repository }}/branches" \
             | jq -r '.[] | .name' | grep -E "^(feature/|refactor/|issue/)")
@@ -27,7 +32,10 @@ jobs:
 
             for branch in $BRANCHES; do
               echo "Deleting branch: $branch"
-              curl -X DELETE -H "Authorization: Bearer ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}" \
+
+              # Use the GitHub API to delete the remote branch
+              # Source get from https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28#get-a-reference
+              curl -X DELETE ${{env.API_HEADERS}} \
                 "https://api.github.com/repos/${{ github.repository }}/git/refs/heads/$branch"
             done
           else
