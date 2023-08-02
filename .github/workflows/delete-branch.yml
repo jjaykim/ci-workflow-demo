@@ -30,6 +30,7 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/branches" \
             | jq -r '.[] | .name' | grep -E "^(feature/|refactor/|issue/)")
 
+          echo $BRANCHES
 
           if [ -z "$BRANCHES" ]; then
             echo "No branches to delete."
