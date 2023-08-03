@@ -15,7 +15,8 @@ jobs:
 
       - name: Create PR Body
         run: |
-          commit_messages=$(git log --format="%h - %s" ${{ github.event.before }}..${{ github.sha }})
+          commit_messages=$(git log --format="%h - %s" ^develop HEAD)
+
           echo $commit_messages
 
           pr_body=""
