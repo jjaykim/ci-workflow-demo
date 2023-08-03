@@ -13,37 +13,38 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Create PR Body
-        run: |
-          base_branch=develop  # 변경할 대상 브랜치의 이름
-          commit_messages=$(git log --format="%h - %s" ^$base_branch HEAD)
-
-          echo $commit_messages
-
-          pr_body=""
-          IFS=$'\n'
-          for msg in $commit_messages; do
-            pr_body="${pr_body}* $msg \\n"
-            IFS=' ' read -ra parts <<< "$msg"
-            for part in "${parts[@]}"; do
-              pr_body="${pr_body}\\t"
-            done
-          done
-          pr_body="${pr_body//'* '/'* ['}"
-          pr_body="${pr_body//'] - '/''] - '}"
-          pr_body="${pr_body//$'\t'/  }"
-          echo -e "$pr_body" > pr_body.txt
-
-      - name: Update PR Body
+      - name: Update PR List Body
         uses: actions/github-script@v4
         with:
           github-token: ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}
           script: |
-            const fs = require('fs');
-            const prBody = fs.readFileSync('pr_body.txt', 'utf-8');
-            github.pulls.update({
+            const { data: commitList } = await github.pulls.listCommits({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.payload.pull_request.number,
-              body: prBody,
+            });
+
+            let prBody = '';
+            let indentation = '';
+
+            commitList.forEach(commit => {
+              prBody += `${indentation}* ${commit.sha.substr(0, 7)} - **${commit.commit.message}**\n`;
+              indentation += '\t';
+            });
+
+            const updateCommitListBody = `### 커밋 목록\n\n${prBody.trim()}\n\n---\n\n`
+
+            const curBranch = context.payload.pull_request.head.ref;
+            const updatedBranchBody = `### 반영 브랜치\n\n[${curBranch}](../tree/${curBranch}) -> [develop](../tree/develop)\n\n`;
+
+            const separator = '### 변경 사항';
+            const restOfBody = context.payload.pull_request.body.split(separator)[1];
+
+            const updatedBody = `${updateCommitListBody}${updatedBranchBody}${restOfBody}`;
+
+            await github.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              body: updatedBody,
             });
