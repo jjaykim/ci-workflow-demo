@@ -15,7 +15,8 @@ jobs:
 
       - name: Create PR Body
         run: |
-          commit_messages=$(git log --format="%h - %s" ^develop HEAD)
+          base_branch=develop  # 변경할 대상 브랜치의 이름
+          commit_messages=$(git log --format="%h - %s" ^$base_branch HEAD)
 
           echo $commit_messages
 
