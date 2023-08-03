@@ -2,8 +2,7 @@ name: Delete Stale Branches
 
 on:
   push:
-    branches:
-      - develop
+    branches: [develop]
 
 env:
   API_HEADERS: "-H 'Authorization: Bearer ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}'"

@@ -1,12 +1,8 @@
-name: CI Workflow
+name: PR Approvals Workflow
 
 on:
   pull_request:
-    types:
-      - opened
-      - synchronize
-    branches:
-      - develop
+    types: [opened, synchronize]
 
 env:
   # Source get from https://docs.github.com/ko/rest/pulls/reviews?apiVersion=2022-11-28#dismiss-a-review-for-a-pull-request
