@@ -5,7 +5,7 @@ on:
     branches: [develop]
 
 env:
-  API_HEADERS: "-H 'Authorization: Bearer ${{ secrets.MY_PERSONAL_ACCESS_TOKEN }}'"
+  API_HEADERS: "-H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}'"
 
 jobs:
   delete-stale-branches:
