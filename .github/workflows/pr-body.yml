@@ -15,20 +15,19 @@ jobs:
 
       - name: Create PR Body
         run: |
-          commit_messages=$(git log --format="%h - %s")
+          commit_messages=$(git log --format="%H - %s")
           pr_body=""
+
+          echo $commit_messages
+
           IFS=$'\n'
           for msg in $commit_messages; do
-            pr_body="${pr_body}* $msg \\n"
-            IFS=' ' read -ra parts <<< "$msg"
-            for part in "${parts[@]}"; do
-              pr_body="${pr_body}\\t"
-            done
+            pr_body="${pr_body}* $msg\n"
           done
-          pr_body="${pr_body//'* '/'* ['}"
-          pr_body="${pr_body//'] - '/''] - '}"
+          pr_body="${pr_body//'* '/'* [Hash값] - '}"
           pr_body="${pr_body//$'\t'/  }"
-          echo -e "$pr_body" > pr_body.txt
+          pr_body="${pr_body//$'\n\n'/$'\n'}"
+          echo "$pr_body" > pr_body.txt
 
       - name: Update PR Body
         uses: actions/github-script@v4
