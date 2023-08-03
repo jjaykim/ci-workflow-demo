@@ -16,6 +16,8 @@ jobs:
       - name: Create PR Body
         run: |
           commit_messages=$(git log --format="%h - %s")
+          echo $commit_messages
+
           pr_body=""
           IFS=$'\n'
           for msg in $commit_messages; do
