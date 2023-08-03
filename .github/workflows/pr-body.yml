@@ -1,0 +1,41 @@
+name: Auto Update PR Body
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  update_pr_body:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Create PR Body
+        run: |
+          commit_messages=$(git log --format="%H - %s")
+          pr_body=""
+          IFS=$'\n'
+          for msg in $commit_messages; do
+            pr_body="${pr_body}* $msg\n"
+          done
+          pr_body="${pr_body//'* '/'* [Hash값] - '}"
+          pr_body="${pr_body//$'\t'/  }"
+          pr_body="${pr_body//$'\n\n'/$'\n'}"
+          echo "$pr_body" > pr_body.txt
+
+      - name: Update PR Body
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const prBody = fs.readFileSync('pr_body.txt', 'utf-8');
+            github.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              body: prBody,
+            });
