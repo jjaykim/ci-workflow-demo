@@ -29,16 +29,21 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/branches" \
             | jq -r '.[] | .name | select(test("^(feature/|refactor/|issue/)"))')
 
-          echo $BRANCHES
+          CLOSED_PRS=$(curl -s ${{env.API_HEADERS}} \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls?state=closed" \
+            | jq -r '.[] | .head.ref')
 
-          if [ -z "$BRANCHES" ]; then
+          INTERSECTION=$(comm -12 <(echo "$BRANCHES" | sort) <(echo "$CLOSED_PRS" | sort))
+
+          if [ -z "$INTERSECTION" ]; then
             echo "No branches to delete."
             exit 0
           fi
 
-          echo "The list of Branches will be deleted: $BRANCHES"
+          echo "The list of Branches will be deleted: $INTERSECTION"
 
-          for branch in $BRANCHES; do
+          for branch in $INTERSECTION; do
             echo "Deleting branch: $branch"
 
             curl -X DELETE ${{env.API_HEADERS}} \
